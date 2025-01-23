@@ -1,0 +1,72 @@
+(defun display-board (board)
+  "Display the Tic-Tac-Toe board in a 3x3 grid format."
+  (format t "~%~A | ~A | ~A~%" (nth 0 board) (nth 1 board) (nth 2 board))
+  (format t "---+---+---~%")
+  (format t "~A | ~A | ~A~%" (nth 3 board) (nth 4 board) (nth 5 board))
+  (format t "---+---+---~%")
+  (format t "~A | ~A | ~A~%" (nth 6 board) (nth 7 board) (nth 8 board)))
+
+(defun make-move (board position symbol)
+  "Attempt to place the player's symbol at the specified position."
+  (if (and (>= position 0) (< position 9))  ; Check if position is valid
+      (if (equal (nth position board) " ") ; Check if the position is empty
+          (progn
+            (setf (nth position board) symbol) ; Place the symbol
+            t) ; Return success
+          (progn
+            (format t "That position is already occupied. Try again.~%")
+            nil)) ; Return failure
+      (progn
+        (format t "Invalid position. Enter a number between 0 and 8.~%")
+        nil))) ; Return failure
+
+(defun check-win (board player)
+  "Check if the given player has won the game."
+  (let ((winning-combinations '((0 1 2) (3 4 5) (6 7 8) ; Rows
+                                (0 3 6) (1 4 7) (2 5 8) ; Columns
+                                (0 4 8) (2 4 6))))      ; Diagonals
+    (some (lambda (combo)
+            (every (lambda (pos)
+                     (equal (nth pos board) player))
+                   combo))
+          winning-combinations)))
+
+(defun check-draw (board)
+  "Check if the board is full and no player has won."
+  (not (find " " board :test #'equal)))  ; Return true if no empty space exists
+
+(defun tic-tac-toe ()
+  "Main function to play Tic-Tac-Toe."
+  (loop ; Outer loop for multiple games
+    (let ((board (make-list 9 :initial-element " "))  ; Initialize empty board
+          (current-player "X")                       ; Start with player "X"
+          (game-over nil))                           ; Game over flag
+      (loop ; Inner loop for a single game
+        (display-board board)                        ; Display the board
+        (format t "~%Player ~A, enter your move (0-8): " current-player)
+        (let ((position (read)))                     ; Read player input
+          (if (make-move board position current-player)
+              ;; Valid move
+              (cond
+                ;; Check if current player wins
+                ((check-win board current-player)
+                 (display-board board)
+                 (format t "~%Player ~A wins!~%" current-player)
+                 (setf game-over t))
+                ;; Check for a draw
+                ((check-draw board)
+                 (display-board board)
+                 (format t "~%It's a draw!~%")
+                 (setf game-over t))
+                ;; Switch player if no win or draw
+                (t
+                 (setf current-player (if (equal current-player "X") "O" "X"))))
+              ;; Invalid move
+              (format t "Invalid move. Try again.~%")))
+        (when game-over (return nil))))              ; End the game loop
+    ;; Ask if the user wants to play again
+    (format t "~%Do you want to play again? (y/n): ")
+    (let ((response (read)))
+      (unless (equal response 'y) (return nil)))))   ; Exit the outer loop
+
+(tic-tac-toe)
